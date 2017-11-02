@@ -1,0 +1,25 @@
+html {overflow: hidden;}
+.ClassyCountdownDemo { margin:0 auto;  width:calc(100%); height:calc(100%);/*padding:30px; */position: absolute;left:0;top:0;background: #fff;}
+.zindex100 {z-index: 100;}
+#countdown2 { background:#FFF }
+#countdown3 { background:rgb(52, 73, 94) }
+#countdown4 { background:#222 }
+#countdown5 { background:#222 }
+#countdown6 { background:#222 }
+#countdown7 { background:#222 }
+#countdown8 { background:#222 }
+#countdown9 { background:#FFF }
+#countdown10 { background:#3498db }
+
+.appdrag {
+      -webkit-app-region: drag;
+}
+.appnodrag {
+      -webkit-app-region: no-drag;
+}
+.handdrag {
+      position:relative;
+      z-index: 105;
+      height: 50px;
+      cursor: pointer;
+}
