@@ -21,6 +21,7 @@
             showtype:['D','H','M','S'],
             timecs:10000,
             labels: true,
+            fontsize:0, // 对数字大小控制 1 表示放大
             clocktype:'djs',
             labelsOptions: {
                 lang: {
@@ -84,9 +85,9 @@
             settings.showtype = options.showtype;
         }
 
-        if(typeof options.clocktype != 'undefined' && settings.clocktype == 'yearRemainDay'){
-            settings.showtype = ['D'];
-        }
+        // if(typeof options.clocktype != 'undefined' && settings.clocktype == 'yearRemainDay'){
+        //     settings.showtype = ['D'];
+        // }
 
         if($.inArray('D', settings.showtype) > -1){
             sday = true;
@@ -111,8 +112,6 @@
 
         var curDate = new Date();
         var fYear = curDate.getFullYear();
-        var fMonth = curDate.getMonth();
-        var fDay = curDate.getDay();
 
         //console.log("一年中剩下:",yearRemainDay(fYear, fMonth, fDay));
 
@@ -123,29 +122,40 @@
 
         }
 
-        function yearDays(y, m, d) {
-
-            var mdays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-            var mSum = 0;
-            var sum = 0;
-
-            //如果是闰年的话，那么2月份就应该有29天
-            isLeapYr(y) ? mdays[1] = 29 : mdays[1];
-
-            //计算该月份之前的总天数，比如m=3，那么就计算1和2月的总天数
-            for (var i = 0; i < m - 1; i++) {
-                mSum += mdays[i];
-            }
-
-            //加上当月天数
-            sum = mSum + d;
-
-            return sum;
+        // 一年过了几天
+        function yearDays(leftDay) {
+            return (isLeapYr(y) ? 366 : 365) - leftDay;
         }
 
-        function yearRemainDay(y, m, d){ // 剩下几天
-            var yd = yearDays(y, m, d);
-            return isLeapYr(y) ? (366 - yd) : (365 - yd);
+
+        // 一年剩下的时间
+        function yearRemainTime(){
+            var curDate = new Date();
+            var curTime = curDate.getTime();
+
+            var curYear = curDate.getFullYear();
+            var nextYear = parseInt(curYear) + 1;
+
+            var nextYearTime = new Date(nextYear+'-01-01').getTime();
+
+            var leftTime = nextYearTime - curTime;
+
+            return leftTime;
+
+
+        }
+
+        // 一年中剩下的时间信息
+        function yearRemainDate(){
+            var leftSeconds = Math.floor(yearRemainTime()/1000);
+
+            return {
+                leftSeconds: leftSeconds,
+                leftMinutes: Math.floor(leftSeconds/60),
+                leftHourses: Math.floor(leftSeconds/60/60),
+                leftDay: Math.floor(leftSeconds/60/60/24),
+            };
+
         }
         
         function prepare() {
@@ -189,33 +199,46 @@
 
             element.append(appendStr);
 
-            sday && element.find('.ClassyCountdown-days input').knob($.extend({
+            var nDayset = {
                 width: '100%',
                 displayInput: false,
                 readOnly: true,
                 max: 365
-            }, settings.style.days.gauge));
+            };
 
-            shour && element.find('.ClassyCountdown-hours input').knob($.extend({
+            var nHourset = {
                 width: '100%',
                 displayInput: false,
                 readOnly: true,
                 max: 24
-            }, settings.style.hours.gauge));
-
-            sminute && element.find('.ClassyCountdown-minutes input').knob($.extend({
+            };
+            var nMinuteset = {
                 width: '100%',
                 displayInput: false,
                 readOnly: true,
                 max: 60
-            }, settings.style.minutes.gauge));
-
-            ssecond && element.find('.ClassyCountdown-seconds input').knob($.extend({
+            };
+            var nSecondset = {
                 width: '100%',
                 displayInput: false,
                 readOnly: true,
                 max: 60
-            }, settings.style.seconds.gauge));
+            };
+            var yearallday = isLeapYr(fYear) ? 366 : 365;
+            if(settings.clocktype == 'yearRemainDay'){
+                nDayset.max = yearallday;
+                nHourset.max = yearallday * 24;
+                nMinuteset.max = nHourset.max * 60;
+                nSecondset.max = nMinuteset.max * 60;
+            }
+
+            sday && element.find('.ClassyCountdown-days input').knob($.extend(nDayset, settings.style.days.gauge));
+
+            shour && element.find('.ClassyCountdown-hours input').knob($.extend(nHourset, settings.style.hours.gauge));
+
+            sminute && element.find('.ClassyCountdown-minutes input').knob($.extend(nMinuteset, settings.style.minutes.gauge));
+
+            ssecond && element.find('.ClassyCountdown-seconds input').knob($.extend(nSecondset, settings.style.seconds.gauge));
 
             element.find('.ClassyCountdown-wrapper > div').attr("style", settings.style.element);
 
@@ -280,17 +303,21 @@
                 MinutesLeft = 0;
                 SecondsLeft = 0;
             }
-            var curDate = new Date();
-            var fYear = curDate.getFullYear();
-            var fMonth = curDate.getMonth();
-            var fDay = curDate.getDay();
+            var leftDate;
             var yrd, yearallday = 365;
 
             if(settings.clocktype == 'yearRemainDay'){
-                yrd = yearRemainDay(fYear, fMonth, fDay);
+                leftDate = yearRemainDate();
+                yrd = leftDate.leftDay;
                 yearallday = isLeapYr(fYear) ? 366 : 365;
                 sday && element.find('.ClassyCountdown-days input').val(yearallday - yrd).trigger('change');
+                shour && element.find('.ClassyCountdown-hours input').val(yearallday*24 - leftDate.leftHourses).trigger('change');
+                sminute && element.find('.ClassyCountdown-minutes input').val(yearallday*24*60 - leftDate.leftMinutes).trigger('change');
+                ssecond && element.find('.ClassyCountdown-seconds input').val(yearallday*24*60*60 - leftDate.leftSeconds).trigger('change');
                 sday && element.find('.ClassyCountdown-days .ClassyCountdown-value > div').html(yrd);
+                shour && element.find('.ClassyCountdown-hours .ClassyCountdown-value > div').html(leftDate.leftHourses);
+                sminute && element.find('.ClassyCountdown-minutes .ClassyCountdown-value > div').html(leftDate.leftMinutes);
+                ssecond && element.find('.ClassyCountdown-seconds .ClassyCountdown-value > div').html(leftDate.leftSeconds);
             }else{
 
                 sday && element.find('.ClassyCountdown-days input').val(365 - DaysLeft).trigger('change');
@@ -309,7 +336,7 @@
                 $(this).css('height', $(this).width() + 'px');
             });
             if (settings.style.textResponsive) {
-                element.find('.ClassyCountdown-value').css('font-size', Math.floor(element.find('> div').eq(0).width() * settings.style.textResponsive / 10) + 'px');
+                element.find('.ClassyCountdown-value').css('font-size', Math.floor(element.find('> div').eq(0).width() * settings.style.textResponsive / 10)+settings.fontsize + 'px');
                 element.find('.ClassyCountdown-value').each(function() {
                     $(this).css('margin-top', Math.floor(0 - (parseInt($(this).height()) / 2)) + 'px');
                 });
@@ -323,7 +350,7 @@
                 $(this).css('height', $(this).width() + 'px');
             });
             if (settings.style.textResponsive) {
-                element.find('.ClassyCountdown-value').css('font-size', Math.floor(element.find('> div').eq(0).width() * settings.style.textResponsive / 10) + 'px');
+                element.find('.ClassyCountdown-value').css('font-size', Math.floor(element.find('> div').eq(0).width() * settings.style.textResponsive / 10)+settings.fontsize + 'px');
             }
             element.find('.ClassyCountdown-value').each(function() {
                 $(this).css("margin-top", Math.floor(0 - (parseInt($(this).height()) / 2)) + 'px');

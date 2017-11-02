@@ -87,11 +87,15 @@ $(document).ready(function() {
     });
 
     $('#countdown15').ClassyCountdown({
-        theme: "flat-colors",
+        theme: "flat-colors-black",
         clocktype: 'yearRemainDay',
+        fontsize: -5,
         labelsOptions: {
             lang: {
                 days: 'LDay',
+                 hours: 'LHOURS',
+                minutes: 'LMINUTES',
+                seconds: 'LSECONDS'
             },
             style: 'font-size:0.5em; text-transform:uppercase;'
         },
